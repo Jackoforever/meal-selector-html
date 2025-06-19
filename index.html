@@ -113,7 +113,7 @@
   </div>
 
   <div id="mainDishWrapper" style="display:none;">
-    <label>主菜の追加:</label>
+    <label id="mainLabel">主菜の追加:</label>
     <input type="text" id="mainName" placeholder="名前を入力" />
     <input type="number" id="mainPrice" placeholder="価格を入力" min="0" />
     <button id="addMainBtn">追加</button>
@@ -206,6 +206,8 @@
   const toggleDarkModeBtn = document.getElementById("toggleDarkMode");
 
   // ジャンル変更時処理
+  const mainLabel = document.getElementById("mainLabel");
+
   genreSelect.addEventListener("change", () => {
     const val = genreSelect.value;
     mains = [];
@@ -217,14 +219,20 @@
     rice = null;
     currySize = null;
 
-    if(val === "rice"){
-      riceSizeWrapper.style.display = "block";
-      mainDishWrapper.style.display = "block";
-    } else if(val === "curry"){
-      currySizeWrapper.style.display = "block";
-    } else if(val === "don" || val === "noodle"){
-      mainDishWrapper.style.display = "block";
-    }
+  if(val === "rice"){
+    riceSizeWrapper.style.display = "block";
+    mainDishWrapper.style.display = "block";
+    mainLabel.textContent = "主菜の追加:";
+  } else if(val === "curry"){
+    currySizeWrapper.style.display = "block";
+    mainLabel.textContent = "主菜の追加:";
+  } else if(val === "don"){
+    mainDishWrapper.style.display = "block";
+    mainLabel.textContent = "丼の追加:";
+  } else if(val === "noodle"){
+    mainDishWrapper.style.display = "block";
+    mainLabel.textContent = "麺の追加:";
+  }
 
     updateAddedMains();
   });
