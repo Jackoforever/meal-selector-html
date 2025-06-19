@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>献立セレクター</title>
+<style>
+  body {
+    font-family: "Yu Gothic", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: white;
+    color: black;
+    margin: 0;
+    padding: 1rem;
+  }
+  .dark {
+    background-color: #121212;
+    color: #eee;
+  }
+  .container {
+    max-width: 480px;
+    margin: auto;
+  }
+  label {
+    font-weight: bold;
+    display: block;
+    margin-top: 1rem;
+  }
+  select, input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #aaa;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  .dark select, .dark input[type="text"], .dark input[type="number"] {
+    background-color: #222;
+    border-color: #555;
+    color: #eee;
+  }
+  button {
+    margin-top: 0.8rem;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border-radius: 0.7rem;
+    border: none;
+    cursor: pointer;
+    background-color: #555;
+    color: white;
+  }
+  button:hover {
+    background-color: #777;
+  }
+  .dark button {
+    background-color: #999;
+    color: black;
+  }
+  .dark button:hover {
+    background-color: #bbb;
+  }
+  .added-list {
+    margin-top: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 1rem;
+    padding: 1rem;
+    background-color: #f9f9f9;
+  }
+  .dark .added-list {
+    background-color: #222;
+    border-color: #444;
+  }
+  .added-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+  .added-item button {
+    background-color: #c33;
+    font-weight: bold;
+  }
+  .dark .added-item button {
+    background-color: #e66;
+    color: black;
+  }
+  .result {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    background-color: #dfe;
+    border: 1px solid #9c9;
+  }
+  .dark .result {
+    background-color: #264426;
+    border-color: #4a7;
+    color: #cfc;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <button id="toggleDark">ダークモード切り替え</button>
+
+  <label for="budget">予算を入力 (円):</label>
+  <input type="number" id="budget" min="0" step="1" value="0" />
+
+  <label for="genre">ジャンルを選択:</label>
+  <select id="genre">
+    <option value="">選択してください</option>
+    <option value="rice">ご飯 + 主菜</option>
+    <option value="curry">カレー</option>
+    <option value="don">丼</option>
+    <option value="noodle">麺</option>
+  </select>
+
+  <div id="riceSizeWrapper" style="display:none;">
+    <label for="riceSize">ご飯のサイズ:</label>
+    <select id="riceSize">
+      <option value="">選択してください</option>
+      <option value="99">ご飯 ミニ (99円)</option>
+      <option value="143">ご飯 小 (143円)</option>
+      <option value="187">ご飯 中 (187円)</option>
+      <option value="231">ご飯 大 (231円)</option>
+      <option value="319">ご飯 特大 (319円)</option>
+    </select>
+  </div>
+
+  <div id="mainAddWrapper" style="display:none;">
+    <label>主菜の追加:</label>
+    <input type="text" id="mainName" placeholder="名前" />
+    <input type="number" id="mainPrice" placeholder="価格" min="0" />
+    <button id="addMainBtn">追加</button>
+  </div>
+
+  <div>
+    <label>小鉢の追加:</label>
+    <input type="text" id="subName" placeholder="名前" />
+    <input type="number" id="subPrice" placeholder="価格" min="0" />
+    <button id="addSubBtn">追加</button>
+  </div>
+
+  <div>
+    <label>スープの追加 (※ 味噌汁は最初から含まれています):</label>
+    <input type="text" id="soupName" placeholder="名前" />
+    <input type="number" id="soupPrice" placeholder="価格" min="0" />
+    <button id="addSoupBtn">追加</button>
+  </div>
+
+  <section class="added-list" id="addedList">
+    <h3>追加されたメニュー</h3>
+    <div id="mainsList"><strong>主菜:</strong></div>
+    <div id="subsList"><strong>小鉢:</strong></div>
+    <div id="soupsList"><strong>スープ:</strong></div>
+  </section>
+
+  <button id="calcBtn" style="width:100%; margin-top:1rem;">献立を決定</button>
+
+  <section id="result" class="result" style="display:none;">
+    <h3>おすすめの献立:</h3>
+    <div id="resultContent"></div>
+    <div id="totalPrice" style="font-weight:bold; margin-top:0.8rem;"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const budgetInput = document.getElementById("budget");
+  const genreSelect = document.getElementById("genre");
+  const riceSizeWrapper = document.getElementById("riceSizeWrapper");
+  const riceSizeSelect = document.getElementById("riceSize");
+  const mainAddWrapper = document.getElementById("mainAddWrapper");
+  const mainNameInput = document.getElementById("mainName");
+  const mainPriceInput = document.getElementById("mainPrice");
+  const addMainBtn = document.getElementById("addMainBtn");
+  const subNameInput = document.getElementById("subName");
+  const subPriceInput = document.getElementById("subPrice");
+  const addSubBtn = document.getElementById("addSubBtn");
+  const soupNameInput = document.getElementById("soupName");
+  const soupPriceInput = document.getElementById("soupPrice");
+  const addSoupBtn = document.getElementById("addSoupBtn");
+  const mainsListDiv = document.getElementById("mainsList");
+  const subsListDiv = document.getElementById("subsList");
+  const soupsListDiv = document.getElementById("soupsList");
+  const calcBtn = document.getElementById("calcBtn");
+  const resultSection = document.getElementById("result");
+  const resultContent = document.getElementById("resultContent");
+  const totalPriceDiv = document.getElementById("totalPrice");
+  const toggleDarkBtn = document.getElementById("toggleDark");
+  const container = document.querySelector(".container");
+
+  let mains = [];
+  let subs = [{name:"なし", price:0}];
+  let soups = [{name:"味噌汁", price:44}];
+  let rice = null;
+
+  // ジャンル選択によるUI切替
+  genreSelect.addEventListener("change", () => {
+    const val = genreSelect.value;
+    if(val === "rice"){
+      riceSizeWrapper.style.display = "block";
+      mainAddWrapper.style.display = "block";
+    } else if(val === "curry"){
+      riceSizeWrapper.style.display = "none";
+      mainAddWrapper.style.display = "block";
+      // 予めカレー主菜セットを入れる
+      mains = [
+        {name:"カレー 中", price:385},
+        {name:"カレー 大", price:473},
+        {name:"カレー MEGA", price:520},
+      ];
+      renderMains();
+    } else if(val === "don" || val === "noodle"){
+      riceSizeWrapper.style.display = "none";
+      mainAddWrapper.style.display = "block";
+      mains = [];
+      renderMains();
+    } else {
+      riceSizeWrapper.style.display = "none";
+      mainAddWrapper.style.display = "none";
+      mains = [];
+      renderMains();
+    }
+    rice = null;
+    riceSizeSelect.value = "";
+    clearMainInputs();
+  });
+
+  riceSizeSelect.addEventListener("change", () => {
+    const price = parseInt(riceSizeSelect.value);
+    if(!isNaN(price)){
+      rice = {name: riceSizeSelect.options[riceSizeSelect.selectedIndex].text, price};
+    } else {
+      rice = null;
+    }
+  });
+
+  // 追加ボタン処理
+  addMainBtn.addEventListener("click", () => {
+    const name = mainNameInput.value.trim();
+    const price = parseInt(mainPriceInput.value);
+    if(name && !isNaN(price)){
+      mains.push({name, price});
+      clearMainInputs();
+      renderMains();
+    }
+  });
+
+  addSubBtn.addEventListener("click", () => {
+    const name = subNameInput.value.trim();
+    const price = parseInt(subPriceInput.value);
+    if(name && !isNaN(price)){
+      // 同じ小鉢は2つ以上入れない
+      if(subs.some(s => s.name === name)){
+        alert("同じ小鉢は2つ以上追加できません。");
+        return;
+      }
+      subs.push({name, price});
+      clearSubInputs();
+      renderSubs();
+    }
+  });
+
+  addSoupBtn.addEventListener("click", () => {
+    const name = soupNameInput.value.trim();
+    const price = parseInt(soupPriceInput.value);
+    if(name && !isNaN(price)){
+      soups.push({name, price});
+      clearSoupInputs();
+      renderSoups();
+    }
+  });
+
+  // 表示更新関数
+  function renderMains(){
+    mainsListDiv.innerHTML = "<strong>主菜:</strong>";
+    if(mains.length === 0){
+      mainsListDiv.innerHTML += "<div>追加なし</div>";
+    }
+    mains.forEach((item, i) => {
+      const div = document.createElement("div");
+      div.className = "added-item";
+      div.innerHTML = `<span>${item.name} (${item.price}円)</span><button data-index="${i}" data-type="main">削除</button>`;
+      mainsListDiv.appendChild(div);
+    });
+  }
+  function renderSubs(){
+    subsListDiv.innerHTML = "<strong>小鉢:</strong>";
+    subs.forEach((item, i) => {
+      const div = document.createElement("div");
+      div.className = "added-item";
+      div.innerHTML = `<span>${item.name} (${item.price}円)</span>${i > 0 ? `<button data-index="${i}" data-type="sub">削除</button>` : ""}`;
+      subsListDiv.appendChild(div);
+    });
+  }
+  function renderSoups(){
+    soupsListDiv.innerHTML = "<strong>スープ:</strong>";
+    soups.forEach((item, i) => {
+      const div = document.createElement("div");
+      div.className = "added-item";
+      div.innerHTML = `<span>${item.name} (${item.price}円)</span><button data-index="${i}" data-type="soup">削除</button>`;
+      soupsListDiv.appendChild(div);
+    });
+  }
+
+  // 削除処理
+  [mainsListDiv, subsListDiv, soupsListDiv].forEach(listDiv => {
+    listDiv.addEventListener("click", e => {
+      if(e.target.tagName === "BUTTON"){
+        const idx = parseInt(e.target.getAttribute("data-index"));
+        const type = e.target.getAttribute("data-type");
+        if(type === "main"){
+          mains.splice(idx, 1);
+          renderMains();
+        } else if(type === "sub"){
+          subs.splice(idx, 1);
+          renderSubs();
+        } else if(type === "soup"){
+          soups.splice(idx, 1);
+          renderSoups();
+        }
+      }
+    });
+  });
+
+  function clearMainInputs(){
+    mainNameInput.value = "";
+    mainPriceInput.value = "";
+  }
+  function clearSubInputs(){
+    subNameInput.value = "";
+    subPriceInput.value = "";
+  }
+  function clearSoupInputs(){
+    soupNameInput.value = "";
+    soupPriceInput.value = "";
+  }
+
+  // 献立計算
+  calcBtn.addEventListener("click", () => {
+    const budget = parseInt(budgetInput.value);
+    if(isNaN(budget) || budget <= 0){
+      alert("有効な予算を入力してください");
+      return;
+    }
+    if(mains.length === 0){
+      alert("主菜を1つ以上追加してください");
+      return;
+    }
+    if(subs.length < 2){
+      alert("小鉢を2つ以上追加してください（「なし」を除く）");
+      return;
+    }
+    if(soups.length === 0){
+      alert("スープが1つ以上必要です");
+      return;
+    }
+
+    let bestTotal = -1;
+    let bestCombo = null;
+    // 主菜1つ、小鉢2つ（別のもの）、スープ1つ、ご飯（任意）
+    for(const main of mains){
+      for(let i=0; i<subs.length; i++){
+        for(let j=0; j<subs.length; j++){
+          if(i===j) continue;
+          for(const soup of soups){
+            const total = main.price + subs[i].price + subs[j].price + soup.price + (rice ? rice.price : 0);
+            if(total <= budget && total > bestTotal){
+              bestTotal = total;
+              bestCombo = {main, sub1: subs[i], sub2: subs[j], soup, rice};
+            }
+          }
+        }
+      }
+    }
+
+    if(bestCombo){
+      resultContent.innerHTML = `
+        ${bestCombo.rice ? `<div>${bestCombo.rice.name} (${bestCombo.rice.price}円)</div>` : ""}
+        <div>${bestCombo.main.name} (${bestCombo.main.price}円)</div>
+        <div>${bestCombo.sub1.name} (${bestCombo.sub1.price}円)</div>
+        <div>${bestCombo.sub2.name} (${bestCombo.sub2.price}円)</div>
+        <div>${bestCombo.soup.name} (${bestCombo.soup.price}円)</div>
+      `;
+      totalPriceDiv.textContent = `合計: ${bestTotal}円`;
+      resultSection.style.display = "block";
+    } else {
+      resultContent.textContent = "予算内で組み合わせが見つかりませんでした。";
+      totalPriceDiv.textContent = "";
+      resultSection.style.display = "block";
+    }
+  });
+
+  // ダークモード切替
+  toggleDarkBtn.addEventListener("click", () => {
+    container.classList.toggle("dark");
+  });
+
+  // 初期描画
+  renderMains();
+  renderSubs();
+  renderSoups();
+
+})();
+</script>
+</body>
+</html>
