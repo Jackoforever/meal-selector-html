@@ -136,7 +136,7 @@
   <hr />
 
   <div>
-    <h3>追加された主菜:</h3>
+    <h3 id="mainSectionTitle">追加された主菜:</h3>
     <div id="addedMains" class="added-items"></div>
   </div>
 
@@ -206,9 +206,9 @@
   const toggleDarkModeBtn = document.getElementById("toggleDarkMode");
 
   // ジャンル変更時処理
-  const mainLabel = document.getElementById("mainLabel");
-
   genreSelect.addEventListener("change", () => {
+    const mainLabel = document.getElementById("mainLabel");
+    const mainSectionTitle = document.getElementById("mainSectionTitle"); // ←追加！
     const val = genreSelect.value;
     mains = [];
 
@@ -219,20 +219,19 @@
     rice = null;
     currySize = null;
 
-  if(val === "rice"){
-    riceSizeWrapper.style.display = "block";
-    mainDishWrapper.style.display = "block";
-    mainLabel.textContent = "主菜の追加:";
-  } else if(val === "curry"){
-    currySizeWrapper.style.display = "block";
-    mainLabel.textContent = "主菜の追加:";
-  } else if(val === "don"){
-    mainDishWrapper.style.display = "block";
-    mainLabel.textContent = "丼の追加:";
-  } else if(val === "noodle"){
-    mainDishWrapper.style.display = "block";
-    mainLabel.textContent = "麺の追加:";
-  }
+if (val === "don") {
+  mainLabel.textContent = "丼の追加:";
+  mainSectionTitle.textContent = "追加された丼:";
+} else if (val === "noodle") {
+  mainLabel.textContent = "麺の追加:";
+  mainSectionTitle.textContent = "追加された麺:";
+} else if (val === "rice") {
+  mainLabel.textContent = "主菜の追加:";
+  mainSectionTitle.textContent = "追加された主菜:";
+} else {
+  mainSectionTitle.textContent = "追加された主菜:"; // カレーやその他
+}
+
 
     updateAddedMains();
   });
