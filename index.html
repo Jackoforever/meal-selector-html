@@ -219,18 +219,23 @@
     rice = null;
     currySize = null;
 
-if (val === "don") {
-  mainLabel.textContent = "丼の追加:";
-  mainSectionTitle.textContent = "追加された丼:";
-} else if (val === "noodle") {
-  mainLabel.textContent = "麺の追加:";
-  mainSectionTitle.textContent = "追加された麺:";
-} else if (val === "rice") {
-  mainLabel.textContent = "主菜の追加:";
-  mainSectionTitle.textContent = "追加された主菜:";
-} else {
-  mainSectionTitle.textContent = "追加された主菜:"; // カレーやその他
-}
+  if(val === "rice"){
+    riceSizeWrapper.style.display = "block";
+    mainDishWrapper.style.display = "block";
+    mainLabel.textContent = "主菜の追加:";
+    mainSectionTitle.textContent = "追加された主菜"; // タイトル変更
+  } else if(val === "curry"){
+    currySizeWrapper.style.display = "block";
+    mainSectionTitle.textContent = "追加されたカレー"; // タイトル変更
+  } else if(val === "don"){
+    mainDishWrapper.style.display = "block";
+    mainLabel.textContent = "丼の追加:";
+    mainSectionTitle.textContent = "追加された丼"; // タイトル変更
+  } else if(val === "noodle"){
+    mainDishWrapper.style.display = "block";
+    mainSectionTitle.textContent = "追加された麺"; // タイトル変更
+    mainLabel.textContent = "麺の追加:";
+  }
 
 
     updateAddedMains();
